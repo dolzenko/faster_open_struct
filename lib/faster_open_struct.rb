@@ -10,10 +10,10 @@ module Faster
   # 2. Doesn't convert hash keys to symbols (by default string keys are used,
   #    with fallback to symbol keys)
   #
-  # 3. Creates methods on the fly on OpenStruct class, instead of singleton class.
+  # 3. Creates methods on the fly on `OpenStruct` class, instead of singleton class.
   #    Uses `module_eval` with string to avoid holding scope references for every method.
   #
-  # 4. Test covered :)
+  # 4. Refactored, crud clean, spec covered :)
   #
   class OpenStruct
     # Undefine particularly nasty interfering methods on Ruby 1.8
@@ -78,29 +78,31 @@ module Faster
     # Returns a string containing a detailed summary of the keys and values.
     #
     def inspect
-      str = "#<#{self.class}"
-
-      Thread.current[InspectKey] ||= []
-      if Thread.current[InspectKey].include?(self) then
-        str << " ..."
-      else
-        first = true
-        for k, v in @hash
-          str << "," unless first
-          first = false
-
-          Thread.current[InspectKey] << v
-          begin
-            str << " #{k}=#{v.inspect}"
-          ensure
-            Thread.current[InspectKey].pop
-          end
-        end
-      end
-
+      str = "#<#{ self.class }"
+      str << " #{ @hash.map { |k, v| "#{ k }=#{ v.inspect }" }.join(", ") }" unless @hash.empty?
       str << ">"
     end
-    
+
+    def inspect_with_reentrant_guard(default = "...")
+      Thread.current[InspectKey] ||= []
+
+      if Thread.current[InspectKey].include?(self)
+        return default # reenter detected
+      end
+
+      Thread.current[InspectKey] << self
+
+      begin
+        inspect_without_reentrant_guard
+      ensure
+        Thread.current[InspectKey].pop
+      end
+    end
+
+    alias_method :inspect_without_reentrant_guard, :inspect
+    alias_method :inspect, :inspect_with_reentrant_guard
+
     alias :to_s :inspect
   end
 end
+

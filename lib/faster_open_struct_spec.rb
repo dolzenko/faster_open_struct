@@ -86,7 +86,15 @@ share_examples_for "OpenStruct-like object" do
     it "handles self-recursive cases" do
       os = @klass.new
       os.a = os
-      os.inspect.should match(%r{^#<.*OpenStruct a=#<.*OpenStruct \.\.\.>>$ }x)
+      os.inspect.should match(%r{^#<(Faster::|)OpenStruct a=#<(Faster::|)OpenStruct \.\.\.>>$}x)
+    end
+
+    it "handles deep self-recursive cases" do
+      os = @klass.new
+      os.a = @klass.new
+      os.a.a = os
+      puts os.inspect
+      os.inspect.should match(%r{^#<(Faster::|)OpenStruct a=#<(Faster::|)OpenStruct \.\.\.>>\z}x)
     end
   end
 end
