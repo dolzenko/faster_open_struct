@@ -12,4 +12,4 @@ Differences from Ruby MRI OpenStruct:
 3. Creates methods on the fly on `OpenStruct` class, instead of singleton class.
    Uses `module_eval` with string to avoid holding scope references for every method.
 
-4. Spec covered :)
+4. Refactored, crud clean, spec covered :)
