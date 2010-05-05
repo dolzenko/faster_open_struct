@@ -23,6 +23,10 @@ share_examples_for "OpenStruct-like object" do
       it "creates writer method" do
         @klass.new(:b => 1).tap { |fos| fos.a = "hi!" }.a.should == "hi!"
       end
+
+      it "creates predicate method" do
+        @klass.new(:a? => 1).a?.should == 1
+      end
     end
   end
 
@@ -93,7 +97,6 @@ share_examples_for "OpenStruct-like object" do
       os = @klass.new
       os.a = @klass.new
       os.a.a = os
-      puts os.inspect
       os.inspect.should match(%r{^#<(Faster::|)OpenStruct a=#<(Faster::|)OpenStruct \.\.\.>>\z}x)
     end
   end
@@ -105,12 +108,20 @@ describe "Faster::OpenStruct" do
     load "./faster_open_struct.rb"
     @klass = Faster::OpenStruct
     
-    if Faster::OpenStruct.method_defined?(:a) || Faster::OpenStruct.method_defined?(:b)
+    if Faster::OpenStruct.method_defined?(:a) ||
+            Faster::OpenStruct.method_defined?(:b) ||
+            Faster::OpenStruct.method_defined?(:a?)
       raise "reloading hack failed, clean test state is not guaranteed"
     end
   end
 
   it_should_behave_like "OpenStruct-like object"
+
+  it "reponds to empty? to work seamlessly with ActiveSupport" do
+    @klass.new.empty?.should == true
+    @klass.new(:a => 1).empty?.should == false
+    @klass.new.tap { |os| os.a = 1 }.empty?.should == false
+  end
 
   it "undefines commonly interfering methods" do
     @klass.new.type == nil

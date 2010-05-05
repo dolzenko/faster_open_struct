@@ -51,17 +51,25 @@ module Faster
         @hash.fetch("#{ method_name_sym }", @hash[:#{ method_name_sym }]) # read by default from string key, then try symbol
                                                                           # if string key doesn't exist
       end
-
-      def #{ method_name_sym }=(val)
-        if @hash.key?("#{ method_name_sym }") || @initialized_empty       # write by default to string key (when it is present 
-                                                                          # in initialization hash or initialization hash
-                                                                          # wasn't provided)
-          @hash["#{ method_name_sym }"] = val                             # if it doesn't exist - write to symbol key
-        else
-          @hash[:#{ method_name_sym }] = val
-        end
-      end
       END_EVAL
+
+      unless method_name_sym.to_s[-1] == ?? # can't define writer for predicate method
+        self.class.module_eval <<-END_EVAL, __FILE__, __LINE__ + 1
+        def #{ method_name_sym }=(val)
+          if @hash.key?("#{ method_name_sym }") || @initialized_empty       # write by default to string key (when it is present
+                                                                            # in initialization hash or initialization hash
+                                                                            # wasn't provided)
+            @hash["#{ method_name_sym }"] = val                             # if it doesn't exist - write to symbol key
+          else
+            @hash[:#{ method_name_sym }] = val
+          end
+        end
+        END_EVAL
+      end
+    end
+
+    def empty?
+      @hash.empty?
     end
 
     #
